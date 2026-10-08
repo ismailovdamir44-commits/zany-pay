@@ -165,58 +165,6 @@ app.post("/api/order", (req, res) => {
 app.post("/api/orders", (req, res) => {
   const { user_id } = req.body;
 
-    if (!user_id || !amount) {
-        return res.status(400).json({
-            ok: false,
-            error: "Не указаны user_id или amount"
-        });
-    }
-
-    if (amount < 3000) {
-        return res.status(400).json({
-            ok: false,
-            error: "Минимальная сумма — 3000 сум"
-        });
-    }
-
-    if (!balances[user_id]) {
-        balances[user_id] = 0;
-    }
-
-    balances[user_id] += Number(amount);
-
-    res.json({
-        ok: true,
-        message: "Тестовое пополнение успешно",
-        balance: balances[user_id],
-        amount: Number(amount)
-    });
-});
-
-  if (!user_id) {
-    return res.status(400).json({
-      ok: false,
-      error: "Не указан пользователь"
-    });
-  }
-
-  const userOrders = orders.filter(
-    order => order.user_id === user_id
-  );
-
-  res.json({
-    ok: true,
-    orders: userOrders
-  });
-});
-
-// ===============================
-// ИСТОРИЯ ЗАКАЗОВ
-// ===============================
-
-app.post("/api/orders", (req, res) => {
-  const { user_id } = req.body;
-
   if (!user_id) {
     return res.status(400).json({
       ok: false,
@@ -265,8 +213,8 @@ app.post("/api/topup/test", (req, res) => {
   res.json({
     ok: true,
     message: "Тестовое пополнение успешно",
-    amount: numericAmount,
-    balance: balances[user_id]
+    balance: balances[user_id],
+    amount: numericAmount
   });
 });
 
