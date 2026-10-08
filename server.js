@@ -165,9 +165,6 @@ app.post("/api/order", (req, res) => {
 app.post("/api/orders", (req, res) => {
   const { user_id } = req.body;
 
-  app.post("/api/topup/test", (req, res) => {
-    const { user_id, amount } = req.body;
-
     if (!user_id || !amount) {
         return res.status(400).json({
             ok: false,
@@ -211,6 +208,43 @@ app.post("/api/orders", (req, res) => {
     ok: true,
     orders: userOrders
   });
+});
+
+// ===============================
+// ТЕСТОВОЕ ПОПОЛНЕНИЕ
+// ===============================
+
+app.post("/api/topup/test", (req, res) => {
+    const { user_id, amount } = req.body;
+
+    const numericAmount = Number(amount);
+
+    if (!user_id || !Number.isFinite(numericAmount)) {
+        return res.status(400).json({
+            ok: false,
+            error: "Некорректные данные"
+        });
+    }
+
+    if (numericAmount < 3000) {
+        return res.status(400).json({
+            ok: false,
+            error: "Минимальная сумма — 3 000 сум"
+        });
+    }
+
+    if (balances[user_id] === undefined) {
+        balances[user_id] = 0;
+    }
+
+    balances[user_id] += numericAmount;
+
+    res.json({
+        ok: true,
+        message: "Тестовое пополнение успешно",
+        amount: numericAmount,
+        balance: balances[user_id]
+    });
 });
 
 // ===============================
