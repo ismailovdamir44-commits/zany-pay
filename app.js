@@ -514,6 +514,47 @@ function selectCustomTopUpAmount() {
     paymentMethodPage(amount);
 }
 
+function paymentMethodPage(amount) {
+    setPage(`
+        <div class="page">
+            <div class="header">Способ оплаты</div>
+
+            <div class="section-title">
+                Пополнение на ${amount.toLocaleString()} сум
+            </div>
+
+            <button
+                class="category"
+                onclick="cardPaymentPage(${amount})"
+                style="
+                    width:100%;
+                    margin-top:15px;
+                    text-align:left;
+                "
+            >
+                💳
+                <span>По карте</span>
+            </button>
+
+            <button
+                class="btn"
+                onclick="topUp()"
+                style="margin-top:20px;"
+            >
+                Назад
+            </button>
+        </div>
+    `);
+}
+
+function cardPaymentPage(amount) {
+    alert(
+        "Пополнение на " +
+        amount.toLocaleString() +
+        " сум\n\nЭкран оплаты картой подготовим следующим шагом."
+    );
+}
+
 async function historyPage() {
     setPage(`
         <div class="page">
