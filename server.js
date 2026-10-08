@@ -211,6 +211,30 @@ app.post("/api/orders", (req, res) => {
 });
 
 // ===============================
+// ИСТОРИЯ ЗАКАЗОВ
+// ===============================
+
+app.post("/api/orders", (req, res) => {
+    const { user_id } = req.body;
+
+    if (!user_id) {
+        return res.status(400).json({
+            ok: false,
+            error: "Не указан пользователь"
+        });
+    }
+
+    const userOrders = orders.filter(
+        order => order.user_id === user_id
+    );
+
+    res.json({
+        ok: true,
+        orders: userOrders
+    });
+});
+
+// ===============================
 // ТЕСТОВОЕ ПОПОЛНЕНИЕ
 // ===============================
 
