@@ -3,13 +3,31 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 
+// Разрешаем запросы от нашего сайта
+app.use((req, res, next) => {
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "https://zany-pay.onrender.com"
+  );
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
 const PORT = process.env.PORT || 10000;
 const ARCADEZY_API_KEY = process.env.ARCADEZY_API_KEY;
 
+// Проверка сервера
 app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
 
+// Проверка игрока Mobile Legends
 app.post("/api/mobile-legends/validate", async (req, res) => {
   try {
     const { player_id, server_id } = req.body;
