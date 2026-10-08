@@ -395,6 +395,38 @@ async function confirmPurchase(name, price) {
         );
     }
 }
+
+async function loadBalance() {
+    try {
+        const response = await fetch(
+            "https://zany-pay-hwr9.onrender.com/api/balance",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id: "demo_user"
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+            throw new Error(data.error || "Ошибка загрузки баланса");
+        }
+
+        window.currentBalance = data.balance;
+
+        return data.balance;
+
+    } catch (error) {
+        console.error("Ошибка загрузки баланса:", error);
+        return null;
+    }
+}
+
 function topUp() {
     alert("Раздел пополнения баланса подключим следующим этапом.");
 }
@@ -494,7 +526,7 @@ async function historyPage() {
     }
 }
 
-function profilePage() {
+async function profilePage() {
     setPage(`
         <div class="page">
             <div class="header">Профиль</div>
@@ -508,12 +540,24 @@ function profilePage() {
 
             <div class="card">
                 <h3>💰 Баланс</h3>
-                <p>0 сум</p>
+                <p id="profileBalance">🔄 Загрузка...</p>
             </div>
         </div>
     `);
 
     setActiveNav(3);
+
+    const balance = await loadBalance();
+
+    const balanceElement =
+        document.getElementById("profileBalance");
+
+    if (balanceElement) {
+        balanceElement.textContent =
+            balance !== null
+                ? `${balance.toLocaleString()} сум`
+                : "Не удалось загрузить баланс";
+    }
 }
 
 function setActiveNav(index) {
