@@ -131,40 +131,56 @@ function productPage(product) {
 }
 
 function checkPlayer() {
-    const playerId = document.getElementById("playerId").value;
-    const serverId = document.getElementById("serverId").value;
+  const playerId = document.getElementById("playerId").value.trim();
+  const serverId = document.getElementById("serverId").value.trim();
+  const packages = document.getElementById("packages");
 
-    if (!playerId || !serverId) {
-        alert("Введите ID и Server ID");
-        return;
-    }
+  if (!playerId || !serverId) {
+    alert("Введите ID и Server ID");
+    return;
+  }
 
-    document.getElementById("packages").innerHTML = `
-        <div class="card">
-            <h3>✅ Игрок найден</h3>
-            <p>Ник: <b>Проверяем...</b></p>
-            <p style="color:#9ca4b9">
-                Реальная проверка игры будет подключена позже.
-            </p>
-        </div>
+  if (!/^\d+$/.test(playerId) || !/^\d+$/.test(serverId)) {
+    alert("ID должен содержать только цифры");
+    return;
+  }
 
-        <div class="section-title">Выберите пакет</div>
+  packages.innerHTML = `
+    <div class="card">
+      <h3>⏳ Проверяем игрока...</h3>
+      <p>ID: <b>${playerId}</b></p>
+      <p>Server ID: <b>${serverId}</b></p>
+    </div>
+  `;
 
-        <div class="product" onclick="buyProduct('50 алмазов', 10000)">
-            <div class="product-name">💎 50 алмазов</div>
-            <div class="product-info">10 000 сум</div>
-        </div>
+  setTimeout(() => {
+    packages.innerHTML = `
+      <div class="card">
+        <h3>✅ Игрок найден</h3>
+        <p>Ник: <b>Тестовый игрок</b></p>
+        <p style="color:#9ca4b9">
+          ID: ${playerId} · Server ID: ${serverId}
+        </p>
+      </div>
 
-        <div class="product" onclick="buyProduct('150 алмазов', 25000)">
-            <div class="product-name">💎 150 алмазов</div>
-            <div class="product-info">25 000 сум</div>
-        </div>
+      <div class="section-title">Выберите пакет</div>
 
-        <div class="product" onclick="buyProduct('500 алмазов', 70000)">
-            <div class="product-name">💎 500 алмазов</div>
-            <div class="product-info">70 000 сум</div>
-        </div>
+      <div class="product" onclick="buyProduct('50 алмазов', 10000)">
+        <div class="product-name">💎 50 алмазов</div>
+        <div class="product-info">10 000 сум</div>
+      </div>
+
+      <div class="product" onclick="buyProduct('150 алмазов', 25000)">
+        <div class="product-name">💎 150 алмазов</div>
+        <div class="product-info">25 000 сум</div>
+      </div>
+
+      <div class="product" onclick="buyProduct('500 алмазов', 70000)">
+        <div class="product-name">💎 500 алмазов</div>
+        <div class="product-info">70 000 сум</div>
+      </div>
     `;
+  }, 1000);
 }
 
 function buyProduct(name, price) {
