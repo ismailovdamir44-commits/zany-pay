@@ -4,15 +4,20 @@ function setPage(content) {
     app.innerHTML = content;
 }
 
-function homePage() {
+async function homePage() {
     setPage(`
         <div class="page">
             <div class="header">ZANY PAY</div>
 
             <div class="balance">
                 <div class="balance-title">Ваш баланс</div>
-                <div class="balance-value">0 сум</div>
-                <button class="btn" onclick="topUp()">＋ Пополнить</button>
+                <div class="balance-value" id="homeBalance">
+                    🔄 Загрузка...
+                </div>
+
+                <button class="btn" onclick="topUp()">
+                    + Пополнить баланс
+                </button>
             </div>
 
             <div class="section-title">Магазин</div>
@@ -34,36 +39,26 @@ function homePage() {
                 </button>
 
                 <button class="category" onclick="shopPage()">
-                    •••
+                    ⋯
                     <span>Прочее</span>
                 </button>
-            </div>
-
-            <div class="section-title">Популярные товары</div>
-
-            <div class="product" onclick="productPage('Mobile Legends')">
-                <div class="product-name">Mobile Legends</div>
-                <div class="product-info">Алмазы</div>
-            </div>
-
-            <div class="product" onclick="productPage('Free Fire')">
-                <div class="product-name">Free Fire</div>
-                <div class="product-info">Алмазы</div>
-            </div>
-
-            <div class="product" onclick="productPage('Telegram Stars')">
-                <div class="product-name">Telegram Stars</div>
-                <div class="product-info">Звёзды Telegram</div>
-            </div>
-
-            <div class="product" onclick="productPage('Telegram Premium')">
-                <div class="product-name">Telegram Premium</div>
-                <div class="product-info">Подписка</div>
             </div>
         </div>
     `);
 
     setActiveNav(0);
+
+    const balance = await loadBalance();
+
+    const balanceElement =
+        document.getElementById("homeBalance");
+
+    if (balanceElement) {
+        balanceElement.textContent =
+            balance !== null
+                ? `${balance.toLocaleString()} сум`
+                : "Не удалось загрузить баланс";
+    }
 }
 
 function shopPage() {
