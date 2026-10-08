@@ -65,7 +65,20 @@ app.post("/api/mobile-legends/validate", async (req, res) => {
 
     const data = await response.json();
 
-    res.status(response.status).json(data);
+console.log("Arcadezy validation:", {
+  status: response.status,
+  data
+});
+
+if (!response.ok) {
+  return res.status(response.status).json({
+    ok: false,
+    error: data.error || "Не удалось проверить игрока",
+    code: data.code || "VALIDATION_ERROR"
+  });
+}
+
+res.json(data);
 
   } catch (error) {
     console.error(error);
