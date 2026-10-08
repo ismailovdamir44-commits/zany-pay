@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZANY PAY</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #0b0f19;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .app {
+            max-width: 500px;
+            margin: auto;
+            padding: 16px;
+            padding-bottom: 90px;
+        }
+
+        .header {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+
+        .balance {
+            background: linear-gradient(135deg, #1b2340, #11182b);
+            border: 1px solid #273252;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .balance-title {
+            color: #9ca4b9;
+            font-size: 14px;
+        }
+
+        .balance-value {
+            font-size: 30px;
+            font-weight: 700;
+            margin: 8px 0 16px;
+        }
+
+        .btn {
+            width: 100%;
+            border: 0;
+            border-radius: 14px;
+            padding: 14px;
+            background: #247cff;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 22px 0 12px;
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .category {
+            background: #11182b;
+            color: white;
+            border: 1px solid #202944;
+            border-radius: 14px;
+            padding: 13px 5px;
+            font-size: 21px;
+        }
+
+        .category span {
+            display: block;
+            font-size: 10px;
+            color: #9ca4b9;
+            margin-top: 5px;
+        }
+
+        .product {
+            background: #11182b;
+            border: 1px solid #202944;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 10px;
+        }
+
+        .product-name {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .product-info {
+            color: #9ca4b9;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 500px;
+            margin: auto;
+            background: #111522;
+            border-top: 1px solid #252c40;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            padding: 10px 5px;
+        }
+
+        .nav-btn {
+            background: none;
+            border: 0;
+            color: #8f98ae;
+            font-size: 12px;
+            padding: 6px;
+        }
+
+        .nav-btn.active {
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="header">
+        ZANY PAY
+    </div>
+
+    <div class="balance">
+        <div class="balance-title">Ваш баланс</div>
+        <div class="balance-value">0 сум</div>
+        <button class="btn">＋ Пополнить</button>
+    </div>
+
+    <div class="section-title">
+        Магазин
+    </div>
+
+    <div class="categories">
+
+        <button class="category">
+            🎮
+            <span>Игры</span>
+        </button>
+
+        <button class="category">
+            🎁
+            <span>Подарочные карты</span>
+        </button>
+
+        <button class="category">
+            🎟️
+            <span>Подписки</span>
+        </button>
+
+        <button class="category">
+            •••
+            <span>Прочее</span>
+        </button>
+
+    </div>
+
+    <div class="section-title">
+        Популярные товары
+    </div>
+
+    <div class="product">
+        <div class="product-name">Mobile Legends</div>
+        <div class="product-info">Алмазы</div>
+    </div>
+
+    <div class="product">
+        <div class="product-name">Free Fire</div>
+        <div class="product-info">Алмазы</div>
+    </div>
+
+    <div class="product">
+        <div class="product-name">Telegram Stars</div>
+        <div class="product-info">Звёзды Telegram</div>
+    </div>
+
+    <div class="product">
+        <div class="product-name">Telegram Premium</div>
+        <div class="product-info">Подписка</div>
+    </div>
+
+</div>
+
+<div class="bottom-nav">
+
+    <button class="nav-btn active">
+        🏠<br>Главная
+    </button>
+
+    <button class="nav-btn">
+        🛒<br>Магазин
+    </button>
+
+    <button class="nav-btn">
+        📋<br>История
+    </button>
+
+    <button class="nav-btn">
+        👤<br>Профиль
+    </button>
+
+</div>
+
+</body>
+      </html>
