@@ -215,23 +215,23 @@ app.post("/api/orders", (req, res) => {
 // ===============================
 
 app.post("/api/orders", (req, res) => {
-    const { user_id } = req.body;
+  const { user_id } = req.body;
 
-    if (!user_id) {
-        return res.status(400).json({
-            ok: false,
-            error: "Не указан пользователь"
-        });
-    }
-
-    const userOrders = orders.filter(
-        order => order.user_id === user_id
-    );
-
-    res.json({
-        ok: true,
-        orders: userOrders
+  if (!user_id) {
+    return res.status(400).json({
+      ok: false,
+      error: "Не указан пользователь"
     });
+  }
+
+  const userOrders = orders.filter(
+    order => order.user_id === user_id
+  );
+
+  res.json({
+    ok: true,
+    orders: userOrders
+  });
 });
 
 // ===============================
@@ -239,36 +239,35 @@ app.post("/api/orders", (req, res) => {
 // ===============================
 
 app.post("/api/topup/test", (req, res) => {
-    const { user_id, amount } = req.body;
+  const { user_id, amount } = req.body;
+  const numericAmount = Number(amount);
 
-    const numericAmount = Number(amount);
-
-    if (!user_id || !Number.isFinite(numericAmount)) {
-        return res.status(400).json({
-            ok: false,
-            error: "Некорректные данные"
-        });
-    }
-
-    if (numericAmount < 3000) {
-        return res.status(400).json({
-            ok: false,
-            error: "Минимальная сумма — 3 000 сум"
-        });
-    }
-
-    if (balances[user_id] === undefined) {
-        balances[user_id] = 0;
-    }
-
-    balances[user_id] += numericAmount;
-
-    res.json({
-        ok: true,
-        message: "Тестовое пополнение успешно",
-        amount: numericAmount,
-        balance: balances[user_id]
+  if (!user_id || !Number.isFinite(numericAmount)) {
+    return res.status(400).json({
+      ok: false,
+      error: "Некорректные данные"
     });
+  }
+
+  if (numericAmount < 3000) {
+    return res.status(400).json({
+      ok: false,
+      error: "Минимальная сумма — 3 000 сум"
+    });
+  }
+
+  if (balances[user_id] === undefined) {
+    balances[user_id] = 0;
+  }
+
+  balances[user_id] += numericAmount;
+
+  res.json({
+    ok: true,
+    message: "Тестовое пополнение успешно",
+    amount: numericAmount,
+    balance: balances[user_id]
+  });
 });
 
 // ===============================
