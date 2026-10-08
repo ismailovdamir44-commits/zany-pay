@@ -378,6 +378,8 @@ async function confirmPurchase(name, price) {
 
         closePurchaseModal();
 
+        window.currentBalance = data.balance;
+
         alert(
             "✅ Оплата успешно выполнена!\n\n" +
             `🎮 ${name}\n` +
