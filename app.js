@@ -432,6 +432,7 @@ function topUp() {
             <div class="section-title">Выберите сумму</div>
 
             <div class="categories">
+
                 <button class="category" onclick="selectTopUpAmount(10000)">
                     <span>10 000 сум</span>
                 </button>
@@ -451,6 +452,7 @@ function topUp() {
                 <button class="category" onclick="selectTopUpAmount(200000)">
                     <span>200 000 сум</span>
                 </button>
+
             </div>
 
             <div style="margin-top:20px;">
