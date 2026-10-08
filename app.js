@@ -229,10 +229,113 @@ async function checkPlayer() {
 }
 
 function buyProduct(name, price) {
+    const playerId = document.getElementById("playerId")?.value.trim();
+    const serverId = document.getElementById("serverId")?.value.trim();
+
+    if (!playerId || !serverId) {
+        alert("Сначала проверьте игрока.");
+        return;
+    }
+
+    const oldModal = document.getElementById("purchaseModal");
+    if (oldModal) oldModal.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "purchaseModal";
+
+    modal.innerHTML = `
+        <div style="
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,.65);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:20px;
+            z-index:9999;
+        ">
+            <div style="
+                width:100%;
+                max-width:420px;
+                background:#111827;
+                border:1px solid #26324d;
+                border-radius:20px;
+                padding:24px;
+                box-sizing:border-box;
+            ">
+                <h2 style="margin-top:0">
+                    🛒 Подтверждение покупки
+                </h2>
+
+                <div style="
+                    background:#0b1020;
+                    border-radius:14px;
+                    padding:16px;
+                    margin:16px 0;
+                ">
+                    <p style="margin:0 0 10px">
+                        🎮 Mobile Legends
+                    </p>
+
+                    <p style="margin:6px 0">
+                        👤 ID: ${playerId}
+                    </p>
+
+                    <p style="margin:6px 0">
+                        🌐 Server ID: ${serverId}
+                    </p>
+
+                    <p style="margin:6px 0">
+                        💎 Пакет: <b>${name}</b>
+                    </p>
+
+                    <p style="margin:6px 0">
+                        💰 Цена:
+                        <b>${price.toLocaleString()} сум</b>
+                    </p>
+                </div>
+
+                <button
+                    class="btn"
+                    style="width:100%;margin-bottom:10px"
+                    onclick="confirmPurchase('${name}', ${price})"
+                >
+                    Оплатить ${price.toLocaleString()} сум
+                </button>
+
+                <button
+                    class="btn"
+                    style="
+                        width:100%;
+                        background:#252d40;
+                    "
+                    onclick="closePurchaseModal()"
+                >
+                    Отмена
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+
+function closePurchaseModal() {
+    const modal = document.getElementById("purchaseModal");
+
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function confirmPurchase(name, price) {
+    closePurchaseModal();
+
     alert(
-        `Товар: ${name}\n` +
-        `Цена: ${price.toLocaleString()} сум\n\n` +
-        `Следующим этапом подключим оплату с баланса.`
+        `Покупка:\n\n` +
+        `${name}\n` +
+        `${price.toLocaleString()} сум\n\n` +
+        `Следующим шагом подключим настоящее списание с баланса.`
     );
 }
 
