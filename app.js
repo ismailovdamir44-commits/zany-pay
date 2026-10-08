@@ -548,11 +548,210 @@ function paymentMethodPage(amount) {
 }
 
 function cardPaymentPage(amount) {
-    alert(
-        "Пополнение на " +
-        amount.toLocaleString() +
-        " сум\n\nЭкран оплаты картой подготовим следующим шагом."
-    );
+    setPage(`
+        <div class="page">
+            <div class="header">Выберите карту</div>
+
+            <div class="section-title">
+                Пополнение на ${amount.toLocaleString()} сум
+            </div>
+
+            <div style="margin-top:20px;">
+
+                <button
+                    class="category"
+                    onclick="paymentInstructionPage(${amount}, '8600 **** **** 1234')"
+                    style="
+                        width:100%;
+                        text-align:left;
+                        margin-bottom:12px;
+                    "
+                >
+                    💳
+                    <span>
+                        Uzcard<br>
+                        <small>8600 **** **** 1234</small>
+                    </span>
+                </button>
+
+                <button
+                    class="category"
+                    onclick="paymentInstructionPage(${amount}, '9860 **** **** 5678')"
+                    style="
+                        width:100%;
+                        text-align:left;
+                    "
+                >
+                    💳
+                    <span>
+                        Humo<br>
+                        <small>9860 **** **** 5678</small>
+                    </span>
+                </button>
+
+            </div>
+
+            <button
+                class="btn"
+                onclick="paymentMethodPage(${amount})"
+                style="margin-top:20px;"
+            >
+                Назад
+            </button>
+        </div>
+    `);
+}
+
+function paymentInstructionPage(amount, cardNumber) {
+    setPage(`
+        <div class="page">
+            <div class="header">Инструкция по оплате</div>
+
+            <div class="balance" style="margin-top:20px;">
+                <div class="balance-title">Сумма оплаты</div>
+
+                <div class="balance-value">
+                    ${amount.toLocaleString()} сум
+                </div>
+            </div>
+
+            <div class="section-title">Переведите точную сумму</div>
+
+            <div style="
+                margin-top:15px;
+                padding:18px;
+                border-radius:14px;
+                background:#1c1c1e;
+            ">
+                <div style="margin-bottom:12px;">
+                    💳 Карта
+                </div>
+
+                <div style="
+                    font-size:18px;
+                    font-weight:bold;
+                    letter-spacing:1px;
+                ">
+                    ${cardNumber}
+                </div>
+
+                <div style="
+                    margin-top:12px;
+                    color:#aaa;
+                ">
+                    Получатель: ZANY PAY
+                </div>
+            </div>
+
+            <div style="
+                margin-top:20px;
+                padding:15px;
+                border-radius:12px;
+                background:#1c1c1e;
+                text-align:center;
+            ">
+                ⏱️ Ожидание оплаты
+                <div
+                    id="paymentTimer"
+                    style="
+                        font-size:28px;
+                        font-weight:bold;
+                        margin-top:8px;
+                    "
+                >
+                    05:00
+                </div>
+            </div>
+
+            <button
+                class="btn"
+                onclick="paymentWaitingPage(${amount})"
+                style="margin-top:20px;"
+            >
+                Оплатил, жду
+            </button>
+
+            <button
+                class="btn"
+                onclick="topUp()"
+                style="margin-top:10px;"
+            >
+                Отмена
+            </button>
+        </div>
+    `);
+
+    startPaymentTimer(300);
+}
+
+function startPaymentTimer(seconds) {
+    if (window.paymentTimerInterval) {
+        clearInterval(window.paymentTimerInterval);
+    }
+
+    let remaining = seconds;
+
+    window.paymentTimerInterval = setInterval(() => {
+        const timer = document.getElementById("paymentTimer");
+
+        if (!timer) {
+            clearInterval(window.paymentTimerInterval);
+            return;
+        }
+
+        const minutes = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+
+        timer.textContent =
+            String(minutes).padStart(2, "0") +
+            ":" +
+            String(secs).padStart(2, "0");
+
+        if (remaining <= 0) {
+            clearInterval(window.paymentTimerInterval);
+            timer.textContent = "Время истекло";
+        }
+
+        remaining--;
+    }, 1000);
+}
+
+function paymentWaitingPage(amount) {
+    if (window.paymentTimerInterval) {
+        clearInterval(window.paymentTimerInterval);
+    }
+
+    setPage(`
+        <div class="page">
+            <div class="header">Проверка оплаты</div>
+
+            <div class="balance" style="margin-top:30px;">
+                <div style="font-size:45px;">⏳</div>
+
+                <div class="balance-title" style="margin-top:15px;">
+                    Проверяем оплату
+                </div>
+
+                <div style="
+                    margin-top:12px;
+                    color:#aaa;
+                    line-height:1.5;
+                ">
+                    Сумма: ${amount.toLocaleString()} сум
+                    <br>
+                    Ожидаем подтверждение платежа...
+                </div>
+            </div>
+
+            <button
+                class="btn"
+                onclick="homePage()"
+                style="margin-top:25px;"
+            >
+                Вернуться на главную
+            </button>
+        </div>
+    `);
 }
 
 async function historyPage() {
