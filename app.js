@@ -130,57 +130,66 @@ function productPage(product) {
     `);
 }
 
-function checkPlayer() {
+async function checkPlayer() {
   const playerId = document.getElementById("playerId").value.trim();
   const serverId = document.getElementById("serverId").value.trim();
-  const packages = document.getElementById("packages");
+  const result = document.getElementById("playerResult");
 
   if (!playerId || !serverId) {
-    alert("Введите ID и Server ID");
+    result.innerHTML = "❌ Введите ID игрока и Server ID";
     return;
   }
 
-  if (!/^\d+$/.test(playerId) || !/^\d+$/.test(serverId)) {
-    alert("ID должен содержать только цифры");
-    return;
-  }
+  result.innerHTML = "⏳ Проверяем игрока...";
 
-  packages.innerHTML = `
-    <div class="card">
-      <h3>⏳ Проверяем игрока...</h3>
-      <p>ID: <b>${playerId}</b></p>
-      <p>Server ID: <b>${serverId}</b></p>
-    </div>
-  `;
+  try {
+    const response = await fetch(
+      "https://zany-pay-hwr9.onrender.com/api/mobile-legends/validate",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          player_id: playerId,
+          server_id: serverId
+        })
+      }
+    );
 
-  setTimeout(() => {
-    packages.innerHTML = `
-      <div class="card">
-        <h3>✅ Игрок найден</h3>
-        <p>Ник: <b>Тестовый игрок</b></p>
-        <p style="color:#9ca4b9">
-          ID: ${playerId} · Server ID: ${serverId}
-        </p>
-      </div>
+    const data = await response.json();
 
-      <div class="section-title">Выберите пакет</div>
+    if (response.ok && data.valid) {
+      result.innerHTML = `
+        <div style="color:#42d392;">
+          ✅ Игрок найден
+        </div>
+        <div style="margin-top:6px;">
+          Ник: <b>${data.player_name || "Не указан"}</b>
+        </div>
+      `;
 
-      <div class="product" onclick="buyProduct('50 алмазов', 10000)">
-        <div class="product-name">💎 50 алмазов</div>
-        <div class="product-info">10 000 сум</div>
-      </div>
+      showPackages();
+    } else {
+      result.innerHTML = `
+        <div style="color:#ff5c5c;">
+          ❌ Игрок не найден
+        </div>
+        <div style="margin-top:6px;">
+          ${data.error || "Проверьте ID и Server ID"}
+        </div>
+      `;
+    }
 
-      <div class="product" onclick="buyProduct('150 алмазов', 25000)">
-        <div class="product-name">💎 150 алмазов</div>
-        <div class="product-info">25 000 сум</div>
-      </div>
+  } catch (error) {
+    console.error(error);
 
-      <div class="product" onclick="buyProduct('500 алмазов', 70000)">
-        <div class="product-name">💎 500 алмазов</div>
-        <div class="product-info">70 000 сум</div>
+    result.innerHTML = `
+      <div style="color:#ff5c5c;">
+        ❌ Ошибка соединения с сервером
       </div>
     `;
-  }, 1000);
+  }
 }
 
 function buyProduct(name, price) {
