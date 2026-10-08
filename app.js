@@ -328,17 +328,72 @@ function closePurchaseModal() {
     }
 }
 
-function confirmPurchase(name, price) {
-    closePurchaseModal();
+async function confirmPurchase(name, price) {
+    const playerId = document.getElementById("playerId")?.value.trim();
+    const serverId = document.getElementById("serverId")?.value.trim();
 
-    alert(
-        `Покупка:\n\n` +
-        `${name}\n` +
-        `${price.toLocaleString()} сум\n\n` +
-        `Следующим шагом подключим настоящее списание с баланса.`
+    if (!playerId || !serverId) {
+        alert("Сначала проверьте игрока.");
+        return;
+    }
+
+    const button = document.querySelector(
+        '#purchaseModal button[onclick^="confirmPurchase"]'
     );
-}
 
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Оплата...";
+    }
+
+    try {
+        const response = await fetch(
+            "https://zany-pay-hwr9.onrender.com/api/order",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id: "demo_user",
+                    game: "Mobile Legends",
+                    product: name,
+                    price: price,
+                    player_id: playerId,
+                    server_id: serverId,
+                    player_name: window.currentPlayerName || "Без имени"
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+            alert(
+                data.error || "Не удалось выполнить оплату."
+            );
+            return;
+        }
+
+        closePurchaseModal();
+
+        alert(
+            "✅ Оплата успешно выполнена!\n\n" +
+            `🎮 ${name}\n` +
+            `💰 Списано: ${price.toLocaleString()} сум\n` +
+            `💳 Остаток: ${data.balance.toLocaleString()} сум\n\n` +
+            `🧾 Заказ: ${data.order.id}`
+        );
+
+    } catch (error) {
+        console.error("Ошибка оплаты:", error);
+
+        alert(
+            "⚠️ Не удалось связаться с сервером.\n" +
+            "Попробуйте ещё раз."
+        );
+    }
+}
 function topUp() {
     alert("Раздел пополнения баланса подключим следующим этапом.");
 }
