@@ -399,18 +399,99 @@ function topUp() {
     alert("Раздел пополнения баланса подключим следующим этапом.");
 }
 
-function historyPage() {
+async function historyPage() {
     setPage(`
         <div class="page">
             <div class="header">История</div>
 
-            <div class="empty">
-                Пока нет операций
+            <div id="historyList">
+                <div class="empty">
+                    🔄 Загружаем историю...
+                </div>
             </div>
         </div>
     `);
 
     setActiveNav(2);
+
+    try {
+        const response = await fetch(
+            "https://zany-pay-hwr9.onrender.com/api/orders",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id: "demo_user"
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+            throw new Error(data.error || "Ошибка загрузки");
+        }
+
+        const historyList = document.getElementById("historyList");
+
+        if (!data.orders || data.orders.length === 0) {
+            historyList.innerHTML = `
+                <div class="empty">
+                    Пока нет операций
+                </div>
+            `;
+            return;
+        }
+
+        historyList.innerHTML = data.orders
+            .slice()
+            .reverse()
+            .map(order => `
+                <div class="card">
+                    <h3>🎮 ${order.game}</h3>
+
+                    <p>
+                        💎 <b>${order.product}</b>
+                    </p>
+
+                    <p>
+                        👤 ${order.player_name}
+                    </p>
+
+                    <p style="color:#9ca4b9">
+                        ID: ${order.player_id}<br>
+                        Server ID: ${order.server_id}
+                    </p>
+
+                    <p>
+                        💰 ${Number(order.price).toLocaleString()} сум
+                    </p>
+
+                    <p style="color:#4ade80">
+                        ✅ Оплачено
+                    </p>
+
+                    <p style="color:#9ca4b9;font-size:13px">
+                        🧾 ${order.id}
+                    </p>
+                </div>
+            `)
+            .join("");
+
+    } catch (error) {
+        console.error("Ошибка истории:", error);
+
+        document.getElementById("historyList").innerHTML = `
+            <div class="card">
+                <h3>⚠️ Ошибка</h3>
+                <p style="color:#9ca4b9">
+                    Не удалось загрузить историю.
+                </p>
+            </div>
+        `;
+    }
 }
 
 function profilePage() {
