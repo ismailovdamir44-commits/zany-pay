@@ -181,7 +181,8 @@ async function checkPlayer() {
     }
 
     const playerName = data.player_name || "Без имени";
-
+    window.currentPlayerName = playerName;
+      
     packages.innerHTML = `
       <div class="card">
         <h3>✅ Игрок найден</h3>
