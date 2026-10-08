@@ -718,7 +718,7 @@ function startPaymentTimer(seconds) {
     }, 1000);
 }
 
-function paymentWaitingPage(amount) {
+async function paymentWaitingPage(amount) {
     if (window.paymentTimerInterval) {
         clearInterval(window.paymentTimerInterval);
     }
@@ -734,27 +734,117 @@ function paymentWaitingPage(amount) {
                     Проверяем оплату
                 </div>
 
-                <div style="
+                <div id="paymentStatus" style="
                     margin-top:12px;
                     color:#aaa;
                     line-height:1.5;
                 ">
-                    Сумма: ${amount.toLocaleString()} сум
-                    <br>
-                    Ожидаем подтверждение платежа...
+                    Проверяем тестовый платеж...
                 </div>
             </div>
-
-            <button
-                class="btn"
-                onclick="homePage()"
-                style="margin-top:25px;"
-            >
-                Вернуться на главную
-            </button>
         </div>
     `);
-}
+
+    try {
+        const response = await fetch(
+            "https://zany-pay-hwr9.onrender.com/api/topup/test",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id: "demo_user",
+                    amount: amount
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+            throw new Error(
+                data.error || "Не удалось подтвердить оплату"
+            );
+        }
+
+        window.currentBalance = data.balance;
+
+        setPage(`
+            <div class="page">
+                <div class="header">Пополнение</div>
+
+                <div class="balance" style="margin-top:30px;">
+                    <div style="font-size:45px;">✅</div>
+
+                    <div class="balance-title" style="margin-top:15px;">
+                        Оплата подтверждена
+                    </div>
+
+                    <div style="
+                        margin-top:12px;
+                        color:#aaa;
+                        line-height:1.5;
+                    ">
+                        Баланс пополнен на
+                        <br>
+                        <strong>
+                            ${amount.toLocaleString()} сум
+                        </strong>
+                    </div>
+
+                    <div style="
+                        margin-top:15px;
+                        font-size:22px;
+                        font-weight:bold;
+                    ">
+                        ${data.balance.toLocaleString()} сум
+                    </div>
+                </div>
+
+                <button
+                    class="btn"
+                    onclick="homePage()"
+                    style="margin-top:25px;"
+                >
+                    На главную
+                </button>
+            </div>
+        `);
+
+    } catch (error) {
+        console.error("Ошибка пополнения:", error);
+
+        setPage(`
+            <div class="page">
+                <div class="header">Пополнение</div>
+
+                <div class="balance" style="margin-top:30px;">
+                    <div style="font-size:45px;">❌</div>
+
+                    <div class="balance-title" style="margin-top:15px;">
+                        Ошибка проверки
+                    </div>
+
+                    <div style="
+                        margin-top:12px;
+                        color:#aaa;
+                    ">
+                        ${error.message}
+                    </div>
+                </div>
+
+                <button
+                    class="btn"
+                    onclick="homePage()"
+                    style="margin-top:25px;"
+                >
+                    На главную
+                </button>
+            </div>
+        `);
+    }
+    }
 
 async function historyPage() {
     setPage(`
