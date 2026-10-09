@@ -129,6 +129,15 @@
         </button>
     </nav>
 
-    <script src="app.js" defer></script>
+<script>
+window.addEventListener("error", function (event) {
+    const errorBox = document.getElementById("appError");
+    if (errorBox) {
+        errorBox.style.display = "block";
+        errorBox.textContent = "Ошибка JavaScript: " + event.message;
+    }
+});
+</script>
+<script src="./app.js"></script>
 </body>
 </html>
