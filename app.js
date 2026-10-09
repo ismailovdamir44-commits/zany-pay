@@ -557,10 +557,13 @@ function paymentWaitingPage(amount) {
     `, "home");
 }
 
+
 async function historyPage() {
     setPage(`
         <div class="header">История заказов</div>
-        <div id="historyContent" class="card">🔄 Загружаем историю...</div>
+        <div id="historyContent" class="card">
+            🔄 Загружаем историю...
+        </div>
     `, "history");
 
     try {
@@ -585,45 +588,20 @@ async function historyPage() {
                 <b>${safe(order.game || order.product || "Заказ")}</b>
                 <div>${safe(order.product || "")}</div>
                 <div>${order.price != null ? money(order.price) : ""}</div>
-                <small style="color:#9ca8c0">Статус: ${safe(order.status || "неизвестен")}</small>
+                <small style="color:#9ca8c0">
+                    Статус: ${safe(order.status || "неизвестен")}
+                </small>
             </div>
         `).join("");
     } catch (error) {
-        const content = document.ge"Без имени"
-                })
-            }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok || !data.ok) {
-            alert(
-                data.error || "Не удалось выполнить оплату."
-            );
-            return;
+        const content = document.getElementById("historyContent");
+        if (content) {
+            content.textContent =
+                "Не удалось загрузить историю: " + error.message;
         }
-
-        closePurchaseModal();
-
-        window.currentBalance = data.balance;
-
-        alert(
-            "✅ Оплата успешно выполнена!\n\n" +
-            `🎮 ${name}\n` +
-            `💰 Списано: ${price.toLocaleString()} сум\n` +
-            `💳 Остаток: ${data.balance.toLocaleString()} сум\n\n` +
-            `🧾 Заказ: ${data.order.id}`
-        );
-
-    } catch (error) {
-        console.error("Ошибка оплаты:", error);
-
-        alert(
-            "⚠️ Не удалось связаться с сервером.\n" +
-            "Попробуйте ещё раз."
-        );
     }
 }
+
 
 async function loadBalance() {
     try {
