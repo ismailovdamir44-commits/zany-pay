@@ -616,51 +616,6 @@ function paymentInstructionPage(amount) {
     }, 1000);
 }
 
-async function historyPage() {
-    setPage(`
-        <div class="header">История заказов</div>
-        <div id="historyContent" class="card">
-            🔄 Загружаем историю...
-        </div>
-    `, "history");
-
-    try {
-        const data = await apiJSON("/api/orders", {
-            method: "POST",
-            body: JSON.stringify({ user_id: USER_ID })
-        });
-
-        const orders = data.orders || data.items || [];
-        state.history = orders;
-
-        const content = document.getElementById("historyContent");
-        if (!content) return;
-
-        if (!orders.length) {
-            content.textContent = "Заказов пока нет.";
-            return;
-        }
-
-        content.innerHTML = orders.map(order => `
-            <div style="padding:12px 0;border-bottom:1px solid #283047">
-                <b>${safe(order.game || order.product || "Заказ")}</b>
-                <div>${safe(order.product || "")}</div>
-                <div>${order.price != null ? money(order.price) : ""}</div>
-                <small style="color:#9ca8c0">
-                    Статус: ${safe(order.status || "неизвестен")}
-                </small>
-            </div>
-        `).join("");
-    } catch (error) {
-        const content = document.getElementById("historyContent");
-        if (content) {
-            content.textContent =
-                "Не удалось загрузить историю: " + error.message;
-        }
-    }
-}
-
-
 async function loadBalance() {
     try {
         const response = await fetch(
