@@ -201,6 +201,7 @@ async function loadCatalog() {
         );
 
         catalogItems = data.items || data.categories || data.results || [];
+        console.log("Первые товары Arcadezy:", catalogItems.slice(0, 20));
 
         status.textContent = catalogItems.length
             ? `Найдено: ${data.total ?? catalogItems.length}. Выберите товар.`
