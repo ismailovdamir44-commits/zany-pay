@@ -616,21 +616,6 @@ function paymentInstructionPage(amount) {
     }, 1000);
 }
 
-function paymentWaitingPage(amount) {
-    stopPaymentTimer();
-
-    setPage(`
-        <div class="header">Ожидание подтверждения</div>
-        <div class="card">
-            <h3>⏳ Платёж ожидает проверки</h3>
-            <p>Сумма: ${money(amount)}</p>
-            <p>Баланс не изменится, пока платёжный провайдер или администратор не подтвердит перевод.</p>
-        </div>
-        <button class="btn" style="width:100%" onclick="homePage()">На главную</button>
-    `, "home");
-}
-
-
 async function historyPage() {
     setPage(`
         <div class="header">История заказов</div>
