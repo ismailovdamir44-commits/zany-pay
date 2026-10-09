@@ -285,6 +285,149 @@ app.post("/api/mobile-legends/validate", async (req, res) => {
   }
 });
 
+
+/* ===============================
+   ARCADEZY CATALOG
+================================ */
+
+// Список категорий Arcadezy
+app.get("/api/catalog", async (req, res) => {
+  try {
+    if (!ARCADEZY_API_KEY) {
+      return res.status(500).json({
+        ok: false,
+        error: "ARCADEZY_API_KEY не настроен"
+      });
+    }
+
+    const allowedTypes = [
+      "topup",
+      "giftcard",
+      "gamekey",
+      "telegram",
+      "steam"
+    ];
+
+    const type = String(req.query.type || "topup");
+    const page = Math.max(
+      1,
+      Math.min(10000, Number(req.query.page) || 1)
+    );
+    const sort = String(req.query.sort || "az");
+    const q = String(req.query.q || "").slice(0, 100);
+
+    if (!allowedTypes.includes(type)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Неизвестный тип каталога"
+      });
+    }
+
+    if (!["az", "lo", "hi"].includes(sort)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Неизвестная сортировка"
+      });
+    }
+
+    const params = new URLSearchParams({
+      type,
+      page: String(page),
+      sort
+    });
+
+    if (q) params.set("q", q);
+
+    const response = await fetch(
+      `https://arcadezy.com/api/v1/categories?${params}`,
+      {
+        headers: {
+          "X-API-Key": ARCADEZY_API_KEY
+        },
+        signal: AbortSignal.timeout(15000)
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Arcadezy catalog error:", response.status, data);
+
+      return res.status(
+        response.status >= 400 && response.status < 600
+          ? response.status
+          : 502
+      ).json({
+        ok: false,
+        error: data.error || "Не удалось загрузить каталог",
+        code: data.code || "ARCADEZY_ERROR"
+      });
+    }
+
+    return res.json(data);
+  } catch (error) {
+    console.error("Catalog error:", error.message);
+
+    return res.status(502).json({
+      ok: false,
+      error: "Arcadezy временно недоступен"
+    });
+  }
+});
+
+// Пакеты и цены выбранной категории
+app.get("/api/catalog/:slug/offers", async (req, res) => {
+  try {
+    if (!ARCADEZY_API_KEY) {
+      return res.status(500).json({
+        ok: false,
+        error: "ARCADEZY_API_KEY не настроен"
+      });
+    }
+
+    const slug = String(req.params.slug);
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(slug)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Некорректная категория"
+      });
+    }
+
+    const response = await fetch(
+      `https://arcadezy.com/api/v1/categories/${encodeURIComponent(slug)}/offers`,
+      {
+        headers: {
+          "X-API-Key": ARCADEZY_API_KEY
+        },
+        signal: AbortSignal.timeout(15000)
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Arcadezy offers error:", response.status, data);
+
+      return res.status(response.status).json({
+        ok: false,
+        error: data.error || "Не удалось загрузить товары",
+        code: data.code || "ARCADEZY_ERROR"
+      });
+    }
+
+    return res.json(data);
+  } catch (error) {
+    console.error("Offers error:", error.message);
+
+    return res.status(502).json({
+      ok: false,
+      error: "Не удалось получить товары Arcadezy"
+    });
+  }
+});
+
+
 // ===============================
 // START
 // ===============================
