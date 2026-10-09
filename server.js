@@ -286,54 +286,6 @@ app.post("/api/mobile-legends/validate", async (req, res) => {
 });
 
 // ===============================
-// ТЕСТОВОЕ ПОПОЛНЕНИЕ
-// ===============================
-
-app.post("/api/topup/test", (req, res) => {
-    const { user_id, amount } = req.body;
-
-    if (!user_id || !amount) {
-        return res.status(400).json({
-            ok: false,
-            error: "Не указаны user_id или amount"
-        });
-    }
-
-    const numericAmount = Number(amount);
-
-    if (!Number.isFinite(numericAmount) || numericAmount < 3000) {
-        return res.status(400).json({
-            ok: false,
-            error: "Минимальная сумма — 3 000 сум"
-        });
-    }
-
-    if (!balances[user_id]) {
-        balances[user_id] = 0;
-    }
-
-    balances[user_id] += numericAmount;
-
-const topup = {
-  id: "TOPUP-" + Date.now(),
-  user_id,
-  type: "topup",
-  amount: numericAmount,
-  status: "completed",
-  created_at: new Date().toISOString()
-};
-
-topups.push(topup);
-
-res.json({
-  ok: true,
-  message: "Тестовое пополнение успешно",
-  amount: numericAmount,
-  balance: balances[user_id],
-  topup
-});
-
-// ===============================
 // START
 // ===============================
 
