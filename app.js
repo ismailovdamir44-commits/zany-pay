@@ -223,43 +223,68 @@ function filterCatalog() {
     const search = document.getElementById("catalogSearch");
     if (!list || !search) return;
 
-    const allowedGames = [
-        { key: "mlbb", names: ["mobile legends", "mlbb"], icon: "⚔️" },
-        { key: "ff", names: ["free fire"], icon: "🔥" },
-        { key: "pubg", names: ["pubg mobile", "pubg"], icon: "🎯" },
-        { key: "genshin", names: ["genshin impact"], icon: "✨" },
-        { key: "fc", names: ["fc mobile", "ea sports fc mobile", "fifa mobile"], icon: "⚽" },
-        { key: "magic", names: ["magic chess"], icon: "♟️" }
+    const games = [
+        {
+            names: ["mobile legends", "mobile-legends", "mlbb"],
+            title: "Mobile Legends: Bang Bang",
+            icon: "⚔️"
+        },
+        {
+            names: ["free fire", "free-fire"],
+            title: "Free Fire",
+            icon: "🔥"
+        },
+        {
+            names: ["pubg mobile", "pubg-mobile"],
+            title: "PUBG Mobile",
+            icon: "🎯"
+        },
+        {
+            names: ["genshin impact", "genshin-impact"],
+            title: "Genshin Impact",
+            icon: "✨"
+        },
+        {
+            names: ["fc mobile", "fc-mobile", "fifa mobile", "fifa-mobile"],
+            title: "FC Mobile",
+            icon: "⚽"
+        },
+        {
+            names: ["magic chess", "magic-chess"],
+            title: "Magic Chess",
+            icon: "♟️"
+        }
     ];
 
-    const query = search.value.trim().toLowerCase();
+    const normalize = value =>
+        String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
-    const filtered = allowedGames
-        .map(game => {
-            const item = catalogItems.find(product => {
-                const name = String(
-                    product.name || product.title || product.slug || ""
-                ).toLowerCase();
+    const query = normalize(search.value);
 
-                return game.names.some(term => name.includes(term));
-            });
+    const filtered = games.map(game => {
+        const item = catalogItems.find(product => {
+            const fields = [
+                product.name,
+                product.title,
+                product.slug
+            ].map(normalize);
 
-            return item ? { ...item, _gameIcon: game.icon } : null;
-        })
-        .filter(Boolean)
-        .filter(item => {
-            const name = String(
-                item.name || item.title || item.slug || ""
-            ).toLowerCase();
-
-            return !query || name.includes(query);
+            return game.names.some(term =>
+                fields.some(field => field.includes(normalize(term)))
+            );
         });
+
+        return item ? { ...item, _displayTitle: game.title, _gameIcon: game.icon } : null;
+    }).filter(Boolean).filter(item =>
+        !query || normalize(item._displayTitle).includes(query)
+    );
 
     window.visibleCatalogItems = filtered;
 
     if (!filtered.length) {
+        list.style.display = "block";
         list.innerHTML =
-            '<div class="card">Выбранные игры пока не найдены в каталоге поставщика.</div>';
+            '<div class="card">Не все выбранные игры найдены в каталоге поставщика. Проверим доступные названия.</div>';
         return;
     }
 
@@ -268,8 +293,7 @@ function filterCatalog() {
     list.style.gap = "14px";
 
     list.innerHTML = filtered.map((item, index) => {
-        const name = item.name || item.title || item.slug;
-        const image = item.image_url || item.image || item.icon || item.logo;
+        const image = item.image_url || item.image || item.logo || item.icon;
         const price = item.from_price_usd;
 
         return `
@@ -277,7 +301,7 @@ function filterCatalog() {
                 onclick="openCatalogProduct(${index})"
                 style="
                     min-width:0;
-                    min-height:225px;
+                    min-height:220px;
                     padding:16px;
                     text-align:left;
                     border:1px solid #292d43;
@@ -291,19 +315,13 @@ function filterCatalog() {
                 ">
                 ${
                     image
-                    ? `<img src="${safe(image)}"
-                        alt="${safe(name)}"
+                    ? `<img src="${safe(image)}" alt=""
                         style="width:76px;height:76px;object-fit:cover;border-radius:18px"
                         onerror="this.style.display='none'">`
-                    : `<div style="
-                        width:76px;height:76px;border-radius:18px;
-                        background:#252b42;display:flex;
-                        align-items:center;justify-content:center;
-                        font-size:38px
-                    ">${item._gameIcon}</div>`
+                    : `<div style="width:76px;height:76px;border-radius:18px;background:#252b42;display:flex;align-items:center;justify-content:center;font-size:38px">${item._gameIcon}</div>`
                 }
                 <div style="font-size:16px;font-weight:700;line-height:1.3">
-                    ${safe(name)}
+                    ${safe(item._displayTitle)}
                 </div>
                 <div style="margin-top:auto;color:#9ca8c0;font-size:13px">
                     ${price != null ? "От $" + safe(price) : "Посмотреть цены"}
@@ -311,7 +329,7 @@ function filterCatalog() {
             </button>
         `;
     }).join("");
-}
+            }
 
 
 async function openCatalogProduct(index) {
