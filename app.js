@@ -201,6 +201,15 @@ async function loadCatalog() {
         );
 
         catalogItems = data.items || data.categories || data.results || [];
+        status.textContent = catalogItems
+    .filter(item => /mobile|legend|mlbb|fire|pubg|genshin|impact|fifa|fc mobile|magic|chess/i.test(
+        [item.name, item.title, item.slug].join(" ")
+    ))
+    .map(item => `${item.name || item.title || ""} (${item.slug || ""})`)
+    .join("\n") || "Совпадений нет в первой загруженной странице каталога";
+
+list.innerHTML = "";
+return;
         status.textContent = catalogItems.length
     ? `Найдено: ${data.total ?? catalogItems.length}. Выберите игру.`
     : "Каталог поставщика пуст.";
