@@ -1,363 +1,595 @@
+
+const API = "https://zany-pay-hwr9.onrender.com";
+const USER_ID = "demo_user";
+
 const app = document.querySelector(".app");
 
-function setPage(content) {
-    app.innerHTML = content;
+let catalogItems = [];
+let currentGame = null;
+let currentOffers = [];
+let currentPlayer = null;
+let catalogType = "topup";
+let paymentTimerInterval = null;
+
+const state = {
+    balance: null,
+    history: []
+};
+
+function money(value) {
+    return Number(value || 0).toLocaleString("ru-RU") + " сум";
+}
+
+function safe(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+function stopPaymentTimer() {
+    if (paymentTimerInterval) {
+        clearInterval(paymentTimerInterval);
+        paymentTimerInterval = null;
+    }
+}
+
+function setPage(content, active = "home") {
+    stopPaymentTimer();
+
+    app.innerHTML = `
+        <div class="page" style="padding-bottom:100px;min-height:75vh">
+            ${content}
+        </div>
+
+        <nav style="
+            position:fixed;bottom:0;left:0;right:0;z-index:1000;
+            display:flex;justify-content:space-around;gap:4px;
+            padding:12px 5px calc(12px + env(safe-area-inset-bottom));
+            background:#101522;border-top:1px solid #283047;
+        ">
+            ${[
+                ["home","⌂","Главная"],
+                ["shop","🎮","Магазин"],
+                ["history","🧾","История"],
+                ["profile","👤","Профиль"]
+            ].map(([id, icon, label]) => `
+                <button onclick="navigate('${id}')" style="
+                    flex:1;border:0;border-radius:12px;padding:8px 2px;
+                    background:${active === id ? "#283451" : "transparent"};
+                    color:${active === id ? "#fff" : "#9ca8c0"};
+                    font-size:12px;
+                ">
+                    <div style="font-size:21px;margin-bottom:4px">${icon}</div>
+                    ${label}
+                </button>
+            `).join("")}
+        </nav>
+    `;
+}
+
+function navigate(page) {
+    if (page === "home") homePage();
+    if (page === "shop") shopPage();
+    if (page === "history") historyPage();
+    if (page === "profile") profilePage();
+}
+
+async function apiJSON(path, options = {}) {
+    const response = await fetch(API + path, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {})
+        }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.ok === false) {
+        throw new Error(data.error || `Ошибка сервера: ${response.status}`);
+    }
+
+    return data;
+}
+
+async function loadBalance() {
+    try {
+        const data = await apiJSON("/api/balance", {
+            method: "POST",
+            body: JSON.stringify({ user_id: USER_ID })
+        });
+
+        state.balance = Number(data.balance);
+        return state.balance;
+    } catch (error) {
+        console.error("Ошибка баланса:", error);
+        state.balance = null;
+        return null;
+    }
 }
 
 async function homePage() {
     setPage(`
-        <div class="page">
-            <div class="header">ZANY PAY</div>
-
-            <div class="balance">
-                <div class="balance-title">Ваш баланс</div>
-                <div class="balance-value" id="homeBalance">
-                    🔄 Загрузка...
-                </div>
-
-                <button class="btn" onclick="topUp()">
-                    + Пополнить баланс
-                </button>
+        <header style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+                <div style="font-size:25px;font-weight:800;letter-spacing:1px">ZANY PAY</div>
+                <div style="color:#9ca8c0;font-size:13px">Игровые пополнения</div>
             </div>
+            <div style="font-size:28px">⚡</div>
+        </header>
 
-            <div class="section-title">Магазин</div>
+        <section class="balance" style="margin-top:22px">
+            <div class="balance-title">Ваш баланс</div>
+            <div class="balance-value" id="homeBalance">🔄 Загрузка...</div>
+            <button class="btn" onclick="topUp()" style="width:100%;margin-top:14px">
+                + Пополнить баланс
+            </button>
+        </section>
 
-            <div class="categories">
-                <button class="category" onclick="shopPage()">
-                    🎮
-                    <span>Игры</span>
-                </button>
+        <div class="section-title" style="margin-top:28px">Быстрый доступ</div>
 
-                <button class="category" onclick="shopPage()">
-                    🎁
-                    <span>Подарочные карты</span>
-                </button>
-
-                <button class="category" onclick="shopPage()">
-                    🎟️
-                    <span>Подписки</span>
-                </button>
-
-                <button class="category" onclick="shopPage()">
-                    ⋯
-                    <span>Прочее</span>
-                </button>
-            </div>
+        <div class="categories">
+            <button class="category" onclick="openCatalogType('topup')">🎮<span>Игры</span></button>
+            <button class="category" onclick="openCatalogType('giftcard')">🎁<span>Подарочные карты</span></button>
+            <button class="category" onclick="openCatalogType('telegram')">⭐<span>Telegram</span></button>
+            <button class="category" onclick="openCatalogType('steam')">🕹️<span>Steam</span></button>
         </div>
-    `);
 
-    setActiveNav(0);
+        <div class="section-title" style="margin-top:25px">Магазин</div>
+        <div class="card">
+            <p>Ищи игру, выбери предложение и проверь данные аккаунта, если поставщик поддерживает такую проверку.</p>
+            <button class="btn" style="width:100%" onclick="shopPage()">Открыть каталог →</button>
+        </div>
+    `, "home");
 
     const balance = await loadBalance();
+    const element = document.getElementById("homeBalance");
 
-    const balanceElement =
-        document.getElementById("homeBalance");
-
-    if (balanceElement) {
-        balanceElement.textContent =
-            balance !== null
-                ? `${balance.toLocaleString()} сум`
-                : "Не удалось загрузить баланс";
+    if (element) {
+        element.textContent = balance === null
+            ? "Не удалось загрузить баланс"
+            : money(balance);
     }
 }
 
-function shopPage() {
+function openCatalogType(type) {
+    catalogType = type;
+    shopPage();
+}
+
+async function shopPage() {
     setPage(`
-        <div class="page">
-            <button class="back" onclick="homePage()">← Назад</button>
+        <button class="back" onclick="homePage()">← На главную</button>
+        <div class="header">Магазин</div>
 
-            <div class="header">Магазин</div>
+        <input id="catalogSearch" class="input"
+            placeholder="🔎 Поиск игры или услуги..."
+            oninput="filterCatalog()">
 
-            <div class="product" onclick="productPage('Mobile Legends')">
-                <div class="product-name">🎮 Mobile Legends</div>
-                <div class="product-info">Алмазы</div>
-            </div>
-
-            <div class="product" onclick="productPage('Free Fire')">
-                <div class="product-name">🔥 Free Fire</div>
-                <div class="product-info">Алмазы</div>
-            </div>
-
-            <div class="product" onclick="productPage('Telegram Stars')">
-                <div class="product-name">⭐ Telegram Stars</div>
-                <div class="product-info">Звёзды</div>
-            </div>
-
-            <div class="product" onclick="productPage('Telegram Premium')">
-                <div class="product-name">💎 Telegram Premium</div>
-                <div class="product-info">Подписка</div>
-            </div>
+        <div class="categories" style="margin:15px 0">
+            <button class="category" onclick="changeCatalogType('topup')">🎮<span>Игры</span></button>
+            <button class="category" onclick="changeCatalogType('giftcard')">🎁<span>Карты</span></button>
+            <button class="category" onclick="changeCatalogType('telegram')">⭐<span>Telegram</span></button>
+            <button class="category" onclick="changeCatalogType('steam')">🕹️<span>Steam</span></button>
         </div>
-    `);
 
-    setActiveNav(1);
+        <div id="catalogStatus" class="card">🔄 Загружаем каталог...</div>
+        <div id="catalogList"></div>
+
+        <button class="btn" onclick="loadCatalog()" style="width:100%;margin-top:12px">
+            Обновить каталог
+        </button>
+    `, "shop");
+
+    await loadCatalog();
 }
 
-function productPage(product) {
-    setPage(`
-        <div class="page">
-            <button class="back" onclick="shopPage()">← Назад</button>
-
-            <div class="header">${product}</div>
-
-            <div class="card">
-                <h3>Данные аккаунта</h3>
-
-                <input
-                    class="input"
-                    id="playerId"
-                    placeholder="Введите ID"
-                >
-
-                <input
-                    class="input"
-                    id="serverId"
-                    placeholder="Введите Server ID"
-                >
-
-                <button class="btn" onclick="checkPlayer()">
-                    Проверить
-                </button>
-            </div>
-
-            <div id="packages"></div>
-        </div>
-    `);
+function changeCatalogType(type) {
+    catalogType = type;
+    shopPage();
 }
 
-async function checkPlayer() {
-  const playerId = document.getElementById("playerId").value.trim();
-  const serverId = document.getElementById("serverId").value.trim();
-  const packages = document.getElementById("packages");
+async function loadCatalog() {
+    const status = document.getElementById("catalogStatus");
+    const list = document.getElementById("catalogList");
+    if (!status || !list) return;
 
-  if (!playerId || !serverId) {
-    alert("Введите ID и Server ID");
-    return;
-  }
-
-  packages.innerHTML = `
-    <div class="card">
-      <h3>🔄 Проверяем игрока...</h3>
-      <p style="color:#9ca4b9">
-        Подождите немного
-      </p>
-    </div>
-  `;
-
-  try {
-    const response = await fetch(
-      "https://zany-pay-hwr9.onrender.com/api/mobile-legends/validate",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          player_id: playerId,
-          server_id: serverId
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    console.log("Mobile Legends validation:", data);
-
-    if (!response.ok || !data.ok || data.valid !== true) {
-      packages.innerHTML = `
-        <div class="card">
-          <h3>❌ Игрок не найден</h3>
-          <p style="color:#9ca4b9">
-            ${data.error || "Проверьте ID игрока и Server ID"}
-          </p>
-        </div>
-      `;
-      return;
-    }
-
-    const playerName = data.player_name || "Без имени";
-    window.currentPlayerName = playerName;
-      
-    packages.innerHTML = `
-      <div class="card">
-        <h3>✅ Игрок найден</h3>
-
-        <p>
-          Ник: <b>${playerName}</b>
-        </p>
-
-        <p style="color:#9ca4b9">
-          ID: ${playerId}<br>
-          Server ID: ${serverId}
-        </p>
-      </div>
-
-      <div class="section-title">Выберите пакет</div>
-
-      <div class="product" onclick="buyProduct('50 алмазов', 10000)">
-        <div class="product-name">💎 50 алмазов</div>
-        <div class="product-info">10 000 сум</div>
-      </div>
-
-      <div class="product" onclick="buyProduct('150 алмазов', 25000)">
-        <div class="product-name">💎 150 алмазов</div>
-        <div class="product-info">25 000 сум</div>
-      </div>
-
-      <div class="product" onclick="buyProduct('500 алмазов', 70000)">
-        <div class="product-name">💎 500 алмазов</div>
-        <div class="product-info">70 000 сум</div>
-      </div>
-    `;
-
-  } catch (error) {
-    console.error("Ошибка проверки игрока:", error);
-
-    packages.innerHTML = `
-      <div class="card">
-        <h3>⚠️ Ошибка проверки</h3>
-        <p style="color:#9ca4b9">
-          Не удалось связаться с сервером. Попробуйте ещё раз.
-        </p>
-      </div>
-    `;
-  }
-}
-
-function buyProduct(name, price) {
-    const playerId = document.getElementById("playerId")?.value.trim();
-    const serverId = document.getElementById("serverId")?.value.trim();
-
-    if (!playerId || !serverId) {
-        alert("Сначала проверьте игрока.");
-        return;
-    }
-
-    const oldModal = document.getElementById("purchaseModal");
-    if (oldModal) oldModal.remove();
-
-    const modal = document.createElement("div");
-    modal.id = "purchaseModal";
-
-    modal.innerHTML = `
-        <div style="
-            position:fixed;
-            inset:0;
-            background:rgba(0,0,0,.65);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            padding:20px;
-            z-index:9999;
-        ">
-            <div style="
-                width:100%;
-                max-width:420px;
-                background:#111827;
-                border:1px solid #26324d;
-                border-radius:20px;
-                padding:24px;
-                box-sizing:border-box;
-            ">
-                <h2 style="margin-top:0">
-                    🛒 Подтверждение покупки
-                </h2>
-
-                <div style="
-                    background:#0b1020;
-                    border-radius:14px;
-                    padding:16px;
-                    margin:16px 0;
-                ">
-                    <p style="margin:0 0 10px">
-                        🎮 Mobile Legends
-                    </p>
-
-                    <p style="margin:6px 0">
-                        👤 ID: ${playerId}
-                    </p>
-
-                    <p style="margin:6px 0">
-                        🌐 Server ID: ${serverId}
-                    </p>
-
-                    <p style="margin:6px 0">
-                        💎 Пакет: <b>${name}</b>
-                    </p>
-
-                    <p style="margin:6px 0">
-                        💰 Цена:
-                        <b>${price.toLocaleString()} сум</b>
-                    </p>
-                </div>
-
-                <button
-                    class="btn"
-                    style="width:100%;margin-bottom:10px"
-                    onclick="confirmPurchase('${name}', ${price})"
-                >
-                    Оплатить ${price.toLocaleString()} сум
-                </button>
-
-                <button
-                    class="btn"
-                    style="
-                        width:100%;
-                        background:#252d40;
-                    "
-                    onclick="closePurchaseModal()"
-                >
-                    Отмена
-                </button>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-}
-
-function closePurchaseModal() {
-    const modal = document.getElementById("purchaseModal");
-
-    if (modal) {
-        modal.remove();
-    }
-}
-
-async function confirmPurchase(name, price) {
-    const playerId = document.getElementById("playerId")?.value.trim();
-    const serverId = document.getElementById("serverId")?.value.trim();
-
-    if (!playerId || !serverId) {
-        alert("Сначала проверьте игрока.");
-        return;
-    }
-
-    const button = document.querySelector(
-        '#purchaseModal button[onclick^="confirmPurchase"]'
-    );
-
-    if (button) {
-        button.disabled = true;
-        button.textContent = "Оплата...";
-    }
+    status.textContent = "🔄 Загружаем каталог Arcadezy...";
+    list.innerHTML = "";
 
     try {
-        const response = await fetch(
-            "https://zany-pay-hwr9.onrender.com/api/order",
+        const data = await apiJSON(
+            `/api/catalog?type=${encodeURIComponent(catalogType)}&page=1&sort=az`
+        );
+
+        catalogItems = data.items || data.categories || data.results || [];
+
+        status.textContent = catalogItems.length
+            ? `Найдено: ${data.total ?? catalogItems.length}. Выберите товар.`
+            : "В этой категории товары не найдены.";
+
+        filterCatalog();
+    } catch (error) {
+        status.textContent = "Не удалось загрузить каталог: " + error.message;
+    }
+}
+
+function filterCatalog() {
+    const list = document.getElementById("catalogList");
+    const search = document.getElementById("catalogSearch");
+    if (!list || !search) return;
+
+    const query = search.value.trim().toLowerCase();
+    const filtered = catalogItems.filter(item =>
+        String(item.name || item.title || item.slug || "")
+            .toLowerCase().includes(query)
+    );
+
+    window.visibleCatalogItems = filtered;
+
+    if (!filtered.length) {
+        list.innerHTML = `<div class="card">Ничего не найдено.</div>`;
+        return;
+    }
+
+    list.innerHTML = filtered.map((item, index) => `
+        <button class="product" style="width:100%;text-align:left"
+            onclick="openCatalogProduct(${index})">
+            <div class="product-name">🎮 ${safe(item.name || item.title || item.slug)}</div>
+            <div class="product-info">
+                ${item.from_price_usd != null
+                    ? "От $" + safe(item.from_price_usd)
+                    : "Посмотреть предложения"}
+            </div>
+        </button>
+    `).join("");
+}
+
+async function openCatalogProduct(index) {
+    const item = window.visibleCatalogItems?.[index];
+    if (!item || !item.slug) {
+        alert("У товара отсутствует идентификатор поставщика.");
+        return;
+    }
+
+    currentGame = item;
+    currentPlayer = null;
+
+    setPage(`
+        <button class="back" onclick="shopPage()">← Назад</button>
+        <div class="header">${safe(item.name || item.slug)}</div>
+        <div class="card" id="offersStatus">🔄 Загружаем предложения...</div>
+        <div id="offersList"></div>
+    `, "shop");
+
+    try {
+        const data = await apiJSON(
+            `/api/catalog/${encodeURIComponent(item.slug)}/offers`
+        );
+
+        currentOffers = data.offers || data.items || data.results || data.data || [];
+
+        const status = document.getElementById("offersStatus");
+        const list = document.getElementById("offersList");
+        if (!status || !list) return;
+
+        if (!currentOffers.length) {
+            status.textContent = "Предложения не найдены. Возможно, формат ответа API отличается.";
+            return;
+        }
+
+        status.textContent = "Выбери предложение:";
+
+        list.innerHTML = currentOffers.map((offer, offerIndex) => {
+            const name = offer.name || offer.title || offer.product_name || offer.slug || "Товар";
+            const price = offer.price ?? offer.price_usd ?? offer.amount;
+
+            return `
+                <button class="product" style="width:100%;text-align:left"
+                    onclick="selectOffer(${offerIndex})">
+                    <div class="product-name">${safe(name)}</div>
+                    <div class="product-info">
+                        ${price != null ? "$" + safe(price) : "Цена уточняется"}
+                    </div>
+                </button>
+            `;
+        }).join("");
+    } catch (error) {
+        const status = document.getElementById("offersStatus");
+        if (status) status.textContent = "Не удалось загрузить предложения: " + error.message;
+    }
+}
+
+function selectOffer(index) {
+    const offer = currentOffers[index];
+    if (!offer) return;
+
+    const fields = offer.required_fields || offer.fields || offer.inputs || [];
+    const hasValidation = Boolean(
+        offer.validation_supported ||
+        offer.validate_id ||
+        offer.validation_endpoint ||
+        currentGame?.validation_supported
+    );
+
+    if (!Array.isArray(fields) || fields.length === 0) {
+        setPage(`
+            <button class="back" onclick="openCatalogProduct(${window.visibleCatalogItems?.indexOf(currentGame) ?? 0})">← Назад</button>
+            <div class="header">${safe(offer.name || offer.title || "Товар")}</div>
+            <div class="card">
+                <p>Для этого предложения поставщик не вернул список обязательных полей.</p>
+                <p>Не вводи данные аккаунта, пока мы не подтвердим, какие поля действительно нужны.</p>
+            </div>
+        `, "shop");
+        return;
+    }
+
+    if (!hasValidation) {
+        showRequiredFields(offer, fields, false);
+        return;
+    }
+
+    showRequiredFields(offer, fields, true);
+}
+
+function showRequiredFields(offer, fields, hasValidation) {
+    window.selectedOffer = offer;
+    window.selectedOfferFields = fields;
+
+    setPage(`
+        <button class="back" onclick="openCatalogProduct(${window.visibleCatalogItems?.indexOf(currentGame) ?? 0})">← Назад</button>
+        <div class="header">${safe(offer.name || offer.title || "Товар")}</div>
+
+        <div class="card">
+            <h3>Данные аккаунта</h3>
+            ${fields.map((field, index) => {
+                const key = typeof field === "string"
+                    ? field
+                    : (field.name || field.key || field.id || `field_${index}`);
+
+                const label = typeof field === "string"
+                    ? field
+                    : (field.label || field.title || field.placeholder || key);
+
+                return `
+                    <label style="display:block;margin:12px 0 6px">${safe(label)}</label>
+                    <input class="input" id="accountField${index}"
+                        data-field-key="${safe(key)}"
+                        placeholder="${safe(field.placeholder || label)}"
+                        ${field.required === false ? "" : "required"}>
+                `;
+            }).join("")}
+
+            <button class="btn" style="width:100%;margin-top:15px"
+                onclick="${hasValidation ? "validateGenericAccount()" : "saveAccountFields()"}">
+                ${hasValidation ? "Проверить аккаунт" : "Продолжить"}
+            </button>
+        </div>
+
+        <div id="accountResult"></div>
+    `, "shop");
+}
+
+function readAccountFields() {
+    const fields = window.selectedOfferFields || [];
+    const result = {};
+
+    fields.forEach((field, index) => {
+        const input = document.getElementById(`accountField${index}`);
+        if (!input) return;
+
+        const key = input.dataset.fieldKey;
+        result[key] = input.value.trim();
+    });
+
+    return result;
+}
+
+function saveAccountFields() {
+    const values = readAccountFields();
+    if (Object.values(values).some(value => !value)) {
+        alert("Заполни все обязательные поля.");
+        return;
+    }
+
+    currentPlayer = { values, validated: false };
+
+    const result = document.getElementById("accountResult");
+    if (result) {
+        result.innerHTML = `
+            <div class="card">
+                <p>Данные заполнены, но автоматическая проверка для этого предложения не подтверждена.</p>
+                <p>Перед покупкой необходимо проверить поддержку валидации у поставщика.</p>
+            </div>
+        `;
+    }
+}
+
+async function validateGenericAccount() {
+    const values = readAccountFields();
+    if (Object.values(values).some(value => !value)) {
+        alert("Заполни все обязательные поля.");
+        return;
+    }
+
+    const result = document.getElementById("accountResult");
+    if (result) result.innerHTML = `<div class="card">🔄 Проверяем данные...</div>`;
+
+    try {
+        const data = await apiJSON(
+            `/api/catalog/${encodeURIComponent(currentGame.slug)}/validate-id`,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
                 body: JSON.stringify({
-                    user_id: "demo_user",
-                    game: "Mobile Legends",
-                    product: name,
-                    price: price,
-                    player_id: playerId,
-                    server_id: serverId,
-                    player_name: window.currentPlayerName || "Без имени"
+                    offer: window.selectedOffer,
+                    fields: values
+                })
+            }
+        );
+
+        if (!data.valid) {
+            throw new Error(data.error || "Поставщик не подтвердил аккаунт.");
+        }
+
+        currentPlayer = {
+            values,
+            validated: true,
+            playerName: data.player_name || data.nickname || null
+        };
+
+        if (result) {
+            result.innerHTML = `
+                <div class="card">
+                    <h3>✅ Данные подтверждены</h3>
+                    ${currentPlayer.playerName
+                        ? `<p>Ник: <b>${safe(currentPlayer.playerName)}</b></p>`
+                        : "<p>Поставщик подтвердил данные.</p>"}
+                    <p>Проверка успешна, но это ещё не означает, что покупка оплачена.</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        if (result) {
+            result.innerHTML = `<div class="card">❌ Проверка не пройдена: ${safe(error.message)}</div>`;
+        }
+    }
+}
+
+async function topUp() {
+    setPage(`
+        <button class="back" onclick="homePage()">← Назад</button>
+        <div class="header">Пополнение баланса</div>
+
+        <div class="section-title">Выбери сумму</div>
+        <div class="categories">
+            ${[10000,25000,50000,100000,200000].map(amount => `
+                <button class="category" onclick="paymentInstructionPage(${amount})">
+                    <span>${money(amount)}</span>
+                </button>
+            `).join("")}
+        </div>
+
+        <div class="section-title" style="margin-top:20px">Своя сумма</div>
+        <input id="customTopUpAmount" class="input" type="number"
+            min="3000" placeholder="Минимум 3 000 сум">
+        <button class="btn" style="width:100%;margin-top:12px"
+            onclick="customTopUp()">Продолжить</button>
+
+        <div class="card" style="margin-top:15px">
+            <p>Пополнение будет зачислено только после фактического подтверждения платежа.</p>
+        </div>
+    `, "home");
+}
+
+function customTopUp() {
+    const amount = Number(document.getElementById("customTopUpAmount")?.value);
+    if (!Number.isSafeInteger(amount) || amount < 3000) {
+        alert("Введи целую сумму не меньше 3 000 сум.");
+        return;
+    }
+
+    paymentInstructionPage(amount);
+}
+
+function paymentInstructionPage(amount) {
+    setPage(`
+        <button class="back" onclick="topUp()">← Назад</button>
+        <div class="header">Инструкция по оплате</div>
+
+        <div class="balance" style="margin-top:20px">
+            <div class="balance-title">Сумма</div>
+            <div class="balance-value">${money(amount)}</div>
+        </div>
+
+        <div class="card">
+            <p>Перед оплатой необходимо настроить и подтвердить платёжный канал.</p>
+            <p>Номер карты, имя получателя и платёжные реквизиты должны быть настоящими и проверенными.</p>
+            <p>В этой версии платежи автоматически не подтверждаются.</p>
+        </div>
+
+        <div class="card">
+            <div>⏱️ Демонстрационный таймер</div>
+            <div id="paymentTimer" style="font-size:30px;font-weight:bold;margin:12px 0">05:00</div>
+            <p style="color:#9ca8c0">Таймер сам по себе не подтверждает оплату.</p>
+        </div>
+
+        <button class="btn" style="width:100%" onclick="paymentWaitingPage(${amount})">
+            Я совершил перевод
+        </button>
+        <button class="btn" style="width:100%;margin-top:10px" onclick="topUp()">
+            Отмена
+        </button>
+    `, "home");
+
+    let remaining = 300;
+    const timer = document.getElementById("paymentTimer");
+
+    paymentTimerInterval = setInterval(() => {
+        if (!timer) {
+            stopPaymentTimer();
+            return;
+        }
+
+        remaining--;
+        timer.textContent = remaining <= 0
+            ? "Время истекло"
+            : `${String(Math.floor(remaining / 60)).padStart(2,"0")}:${String(remaining % 60).padStart(2,"0")}`;
+
+        if (remaining <= 0) stopPaymentTimer();
+    }, 1000);
+}
+
+function paymentWaitingPage(amount) {
+    stopPaymentTimer();
+
+    setPage(`
+        <div class="header">Ожидание подтверждения</div>
+        <div class="card">
+            <h3>⏳ Платёж ожидает проверки</h3>
+            <p>Сумма: ${money(amount)}</p>
+            <p>Баланс не изменится, пока платёжный провайдер или администратор не подтвердит перевод.</p>
+        </div>
+        <button class="btn" style="width:100%" onclick="homePage()">На главную</button>
+    `, "home");
+}
+
+async function historyPage() {
+    setPage(`
+        <div class="header">История заказов</div>
+        <div id="historyContent" class="card">🔄 Загружаем историю...</div>
+    `, "history");
+
+    try {
+        const data = await apiJSON("/api/orders", {
+            method: "POST",
+            body: JSON.stringify({ user_id: USER_ID })
+        });
+
+        const orders = data.orders || data.items || [];
+        state.history = orders;
+
+        const content = document.getElementById("historyContent");
+        if (!content) return;
+
+        if (!orders.length) {
+            content.textContent = "Заказов пока нет.";
+            return;
+        }
+
+        content.innerHTML = orders.map(order => `
+            <div style="padding:12px 0;border-bottom:1px solid #283047">
+                <b>${safe(order.game || order.product || "Заказ")}</b>
+                <div>${safe(order.product || "")}</div>
+                <div>${order.price != null ? money(order.price) : ""}</div>
+                <small style="color:#9ca8c0">Статус: ${safe(order.status || "неизвестен")}</small>
+            </div>
+        `).join("");
+    } catch (error) {
+        const content = document.ge"Без имени"
                 })
             }
         );
