@@ -313,12 +313,23 @@ app.post("/api/topup/test", (req, res) => {
 
     balances[user_id] += numericAmount;
 
-    res.json({
-        ok: true,
-        message: "Тестовое пополнение успешно",
-        amount: numericAmount,
-        balance: balances[user_id]
-    });
+const topup = {
+  id: "TOPUP-" + Date.now(),
+  user_id,
+  type: "topup",
+  amount: numericAmount,
+  status: "completed",
+  created_at: new Date().toISOString()
+};
+
+topups.push(topup);
+
+res.json({
+  ok: true,
+  message: "Тестовое пополнение успешно",
+  amount: numericAmount,
+  balance: balances[user_id],
+  topup
 });
 
 // ===============================
