@@ -39,6 +39,7 @@ const balances = {
 };
 
 const orders = [];
+const topups = [];
 
 // ===============================
 // HEALTH
