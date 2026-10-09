@@ -134,9 +134,6 @@ async function homePage() {
 
         <div class="categories">
             <button class="category" onclick="openCatalogType('topup')">🎮<span>Игры</span></button>
-            <button class="category" onclick="openCatalogType('giftcard')">🎁<span>Подарочные карты</span></button>
-            <button class="category" onclick="openCatalogType('telegram')">⭐<span>Telegram</span></button>
-            <button class="category" onclick="openCatalogType('steam')">🕹️<span>Steam</span></button>
         </div>
 
         <div class="section-title" style="margin-top:25px">Магазин</div>
@@ -172,9 +169,6 @@ async function shopPage() {
 
         <div class="categories" style="margin:15px 0">
             <button class="category" onclick="changeCatalogType('topup')">🎮<span>Игры</span></button>
-            <button class="category" onclick="changeCatalogType('giftcard')">🎁<span>Карты</span></button>
-            <button class="category" onclick="changeCatalogType('telegram')">⭐<span>Telegram</span></button>
-            <button class="category" onclick="changeCatalogType('steam')">🕹️<span>Steam</span></button>
         </div>
 
         <div id="catalogStatus" class="card">🔄 Загружаем каталог...</div>
