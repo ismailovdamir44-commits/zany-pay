@@ -201,17 +201,11 @@ async function loadCatalog() {
         );
 
         catalogItems = data.items || data.categories || data.results || [];
-        status.textContent = JSON.stringify(
-    catalogItems.slice(0, 20).map(item => ({
-        name: item.name,
-        title: item.title,
-        slug: item.slug
-    })),
-    null,
-    2
-);
-list.innerHTML = "";
-return;
+        status.textContent = catalogItems.length
+    ? `Найдено: ${data.total ?? catalogItems.length}. Выберите игру.`
+    : "Каталог поставщика пуст.";
+
+filterCatalog();
 
         status.textContent = catalogItems.length
             ? `Найдено: ${data.total ?? catalogItems.length}. Выберите товар.`
