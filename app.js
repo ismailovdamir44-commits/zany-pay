@@ -218,36 +218,102 @@ async function loadCatalog() {
     }
 }
 
+
 function filterCatalog() {
     const list = document.getElementById("catalogList");
     const search = document.getElementById("catalogSearch");
     if (!list || !search) return;
 
+    const allowedGames = [
+        { key: "mlbb", names: ["mobile legends", "mlbb"], icon: "⚔️" },
+        { key: "ff", names: ["free fire"], icon: "🔥" },
+        { key: "pubg", names: ["pubg mobile", "pubg"], icon: "🎯" },
+        { key: "genshin", names: ["genshin impact"], icon: "✨" },
+        { key: "fc", names: ["fc mobile", "ea sports fc mobile", "fifa mobile"], icon: "⚽" },
+        { key: "magic", names: ["magic chess"], icon: "♟️" }
+    ];
+
     const query = search.value.trim().toLowerCase();
-    const filtered = catalogItems.filter(item =>
-        String(item.name || item.title || item.slug || "")
-            .toLowerCase().includes(query)
-    );
+
+    const filtered = allowedGames
+        .map(game => {
+            const item = catalogItems.find(product => {
+                const name = String(
+                    product.name || product.title || product.slug || ""
+                ).toLowerCase();
+
+                return game.names.some(term => name.includes(term));
+            });
+
+            return item ? { ...item, _gameIcon: game.icon } : null;
+        })
+        .filter(Boolean)
+        .filter(item => {
+            const name = String(
+                item.name || item.title || item.slug || ""
+            ).toLowerCase();
+
+            return !query || name.includes(query);
+        });
 
     window.visibleCatalogItems = filtered;
 
     if (!filtered.length) {
-        list.innerHTML = `<div class="card">Ничего не найдено.</div>`;
+        list.innerHTML =
+            '<div class="card">Выбранные игры пока не найдены в каталоге поставщика.</div>';
         return;
     }
 
-    list.innerHTML = filtered.map((item, index) => `
-        <button class="product" style="width:100%;text-align:left"
-            onclick="openCatalogProduct(${index})">
-            <div class="product-name">🎮 ${safe(item.name || item.title || item.slug)}</div>
-            <div class="product-info">
-                ${item.from_price_usd != null
-                    ? "От $" + safe(item.from_price_usd)
-                    : "Посмотреть предложения"}
-            </div>
-        </button>
-    `).join("");
+    list.style.display = "grid";
+    list.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+    list.style.gap = "14px";
+
+    list.innerHTML = filtered.map((item, index) => {
+        const name = item.name || item.title || item.slug;
+        const image = item.image_url || item.image || item.icon || item.logo;
+        const price = item.from_price_usd;
+
+        return `
+            <button class="product"
+                onclick="openCatalogProduct(${index})"
+                style="
+                    min-width:0;
+                    min-height:225px;
+                    padding:16px;
+                    text-align:left;
+                    border:1px solid #292d43;
+                    border-radius:24px;
+                    background:#151b2d;
+                    color:#f4f5fb;
+                    display:flex;
+                    flex-direction:column;
+                    align-items:flex-start;
+                    gap:12px;
+                ">
+                ${
+                    image
+                    ? `<img src="${safe(image)}"
+                        alt="${safe(name)}"
+                        style="width:76px;height:76px;object-fit:cover;border-radius:18px"
+                        onerror="this.style.display='none'">`
+                    : `<div style="
+                        width:76px;height:76px;border-radius:18px;
+                        background:#252b42;display:flex;
+                        align-items:center;justify-content:center;
+                        font-size:38px
+                    ">${item._gameIcon}</div>`
+                }
+                <div style="font-size:16px;font-weight:700;line-height:1.3">
+                    ${safe(name)}
+                </div>
+                <div style="margin-top:auto;color:#9ca8c0;font-size:13px">
+                    ${price != null ? "От $" + safe(price) : "Посмотреть цены"}
+                </div>
+            </button>
+        `;
+    }).join("");
 }
+
 
 async function openCatalogProduct(index) {
     const item = window.visibleCatalogItems?.[index];
