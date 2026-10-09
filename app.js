@@ -1239,5 +1239,4 @@ function createNavigation() {
     document.body.appendChild(nav);
 }
 
-createNavigation();
 homePage();
