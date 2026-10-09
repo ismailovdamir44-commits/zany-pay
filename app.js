@@ -1155,8 +1155,6 @@ function createNavigation() {
             👤<br>Профиль
         </button>
     `;
-
-    document.body.appendChild(nav);
+   document.body.appendChild(nav);
 }
-
 homePage();
